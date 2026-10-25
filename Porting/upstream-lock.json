@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "name": "@ai-sdk/perplexity",
+      "reviewedVersion": "5.0.20",
+      "ledgerKind": "provider",
+      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`",
+      "reviewStatus": "imported-reviewed-with-gaps",
+      "archiveIntegrity": "sha512-VOaXGFo2dy4KSlsjKPTweiJugN4o5YuZN3iCsoUrlDiS7Aq0WjQJrYG5Ld6cz355QgvxGqiiodws7qLApM6xDQ==",
+      "sourceRef": "npm:@ai-sdk/perplexity@5.0.20",
+      "testRef": "682e2dd71456f14f9da33a1b983d1998c3a1184c",
+      "testRefRelationship": "inventory-snapshot-not-release-verified",
+      "contractFamilies": [],
+      "contractReview": "not-imported; inspect upstream declarations before extraction"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "package": "swift-ai-perplexity",
+  "status": "coarse-import",
+  "upstream": [
+    {
+      "name": "@ai-sdk/perplexity",
+      "implementation": [
+        "packages/perplexity/src"
+      ],
+      "tests": [
+        "packages/perplexity/src/convert-perplexity-usage.test.ts",
+        "packages/perplexity/src/convert-to-perplexity-decision-state.test.ts",
+        "packages/perplexity/src/convert-to-perplexity-input.test.ts",
+        "packages/perplexity/src/lazy-schemas.test.ts",
+        "packages/perplexity/src/perplexity-decision-model.test.ts",
+        "packages/perplexity/src/perplexity-embedding-model.test.ts",
+        "packages/perplexity/src/perplexity-language-model.test.ts"
+      ]
+    }
+  ],
+  "swift": {
+    "sources": [
+      "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityDecisionModel.swift",
+      "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityEmbeddingModel.swift",
+      "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityModels.swift",
+      "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityProvider.swift"
+    ],
+    "tests": [
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/FixtureDownloadTransport.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityEmbeddingTests.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexitySonarTests.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityStreamingErrorTests.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/TestSupport.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/WeeklyPerplexity20261023Tests.swift"
+    ],
+    "resources": []
+  },
+  "differences": [
+    {
+      "kind": "native-adaptation",
+      "reason": "Preserve Swift async/await, Sendable, Foundation transport and existing documented gaps; see Docs/CoreV6Parity.md and PortingStatus.md."
+    }
+  ],
+  "reviewNote": "M6: Perplexity owns Agent, legacy Sonar, embedding and Decisions surfaces, typed settings and focused tests. Shared transport stays neutral. Existing upstream baselines and gaps are retained."
+}
