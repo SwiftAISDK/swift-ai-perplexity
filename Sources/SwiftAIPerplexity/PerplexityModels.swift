@@ -63,7 +63,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
             content: content,
             finishReason: finishReason,
             usage: perplexityAgentUsage(from: raw["usage"]),
-            providerMetadata: perplexityAgentProviderMetadata(from: raw["usage"]),
+            providerMetadata: perplexityAgentQueryMetadata(perplexityAgentProviderMetadata(from: raw["usage"]), queries: perplexitySearchQueries(raw["output"]?.arrayValue ?? [])),
             rawValue: raw,
             warnings: prepared.warnings,
             requestMetadata: aiRequestMetadata(body: .object(body), headers: request.headers),
@@ -94,6 +94,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     var finishReason: String? = "interrupted"
                     var usage: TokenUsage?
                     var providerMetadata = perplexityAgentProviderMetadata(from: nil)
+                    var searchQueries: [String] = []
                     var hasResponseMetadata = false
                     var activeReasoningID: String?
                     var textByID: [String: String] = [:]
@@ -176,6 +177,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                                 }
                             }
                         case "search_results":
+                            for query in item["queries"]?.arrayValue?.compactMap(\.stringValue) ?? [] where !searchQueries.contains(query) { searchQueries.append(query) }
                             for result in item["results"]?.arrayValue ?? [] {
                                 if let source = perplexityAgentSearchSource(result) { emitSource(source) }
                             }
@@ -225,6 +227,9 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                             continuation.yield(.reasoningStart(id: id))
                             if let thought = raw["thought"]?.stringValue { continuation.yield(.reasoningDeltaPart(id: id, delta: thought)) }
                         case "response.reasoning.search_queries", "response.reasoning.fetch_url_queries":
+                            if raw["type"] == "response.reasoning.search_queries" {
+                                for query in raw["queries"]?.arrayValue?.compactMap(\.stringValue) ?? [] where !searchQueries.contains(query) { searchQueries.append(query) }
+                            }
                             if let id = activeReasoningID, let thought = raw["thought"]?.stringValue {
                                 continuation.yield(.reasoningDeltaPart(id: id, delta: thought))
                             }
@@ -279,7 +284,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     for source in pendingSourcesByURL.values { continuation.yield(.source(source)) }
                     if let activeReasoningID { continuation.yield(.reasoningEnd(id: activeReasoningID)) }
                     for id in textByID.keys where !endedTextIDs.contains(id) { continuation.yield(.textEnd(id: id)) }
-                    continuation.yield(.finishMetadata(reason: finishReason, usage: usage, providerMetadata: providerMetadata))
+                    continuation.yield(.finishMetadata(reason: finishReason, usage: usage, providerMetadata: perplexityAgentQueryMetadata(providerMetadata, queries: searchQueries)))
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -449,19 +454,9 @@ private func perplexityAgentPreparedCall(for request: LanguageModelRequest, mode
         ))
     }
 
-    if options["reasoning"] == nil, isCustomReasoning(request.reasoning) {
-        if request.reasoning == "none" {
-            warnings.append(AIWarning(type: "unsupported", feature: "reasoning \"none\""))
-        } else if let reasoning = request.reasoning {
-            if let effort = mapReasoningToProviderEffort(
-                reasoning: reasoning,
-                effortMap: ["minimal": "minimal", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "xhigh"],
-                warnings: &warnings
-            ) {
-                options["reasoning"] = .object(["effort": .string(effort)])
-            }
-        }
-    }
+    if options["reasoning"] == nil, let effort = mapReasoningToProviderEffort(
+        reasoning: request.reasoning, effortMap: ["minimal": "minimal", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh"], warnings: &warnings
+    ) { options["reasoning"] = ["effort": .string(effort)] }
 
     var body = options
     body[perplexityAgentPresetIDs.contains(modelID) ? "preset" : "model"] = .string(modelID)
@@ -896,6 +891,11 @@ private func validatePerplexityAgentOutputItem(_ item: JSONValue, providerID: St
             }
         }
     case "search_results":
+        if let queries = item["queries"], queries != .null {
+            guard let values = queries.arrayValue, values.allSatisfy({ $0.stringValue != nil }) else {
+                throw perplexityAgentValidationError(providerID, "Perplexity Agent search queries are invalid.")
+            }
+        }
         if let results = item["results"], results != .null {
             guard let results = results.arrayValue else {
                 throw perplexityAgentValidationError(providerID, "Perplexity Agent search results are invalid.")
@@ -1482,4 +1482,18 @@ private func perplexityMessageJSON(_ message: AIMessage) throws -> JSONValue {
         "role": .string(message.role.rawValue),
         "content": .array(parts)
     ])
+}
+private func perplexitySearchQueries(_ output: [JSONValue]) -> [String] {
+    var queries: [String] = []
+    for item in output where item["type"] == "search_results" {
+        for query in item["queries"]?.arrayValue?.compactMap(\.stringValue) ?? [] where !queries.contains(query) { queries.append(query) }
+    }
+    return queries
+}
+private func perplexityAgentQueryMetadata(_ input: [String: JSONValue], queries: [String]) -> [String: JSONValue] {
+    var output = input
+    var metadata = output["perplexity"]?.objectValue ?? [:]
+    metadata["searchQueries"] = queries.isEmpty ? .null : .array(queries.map(JSONValue.string))
+    output["perplexity"] = .object(metadata)
+    return output
 }
