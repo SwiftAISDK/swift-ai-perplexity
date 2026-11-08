@@ -425,8 +425,9 @@ private func perplexityAgentPreparedCall(for request: LanguageModelRequest, mode
     warnings.append(contentsOf: preparedInput.warnings)
     var options = try perplexityAgentProviderOptions(from: request)
     let nativeTools = options.removeValue(forKey: "tools")?.arrayValue ?? []
+    let toolsDisabled = request.toolChoice?.stringValue == "none" || request.toolChoice?["type"]?.stringValue == "none"
     var functionTools: [JSONValue] = []
-    for (name, schema) in request.tools {
+    for (name, schema) in toolsDisabled ? [:] : request.tools {
         if schema["type"]?.stringValue == "provider" {
             warnings.append(AIWarning(type: "unsupported", feature: "provider-defined tool \(schema["name"]?.stringValue ?? name)"))
             continue
@@ -444,7 +445,7 @@ private func perplexityAgentPreparedCall(for request: LanguageModelRequest, mode
         if let strict { tool["strict"] = .bool(strict) }
         functionTools.append(.object(tool))
     }
-    if let choice = request.toolChoice,
+    if !toolsDisabled, let choice = request.toolChoice,
        choice.stringValue != "auto",
        choice["type"]?.stringValue != "auto" {
         warnings.append(AIWarning(
@@ -459,13 +460,14 @@ private func perplexityAgentPreparedCall(for request: LanguageModelRequest, mode
     ) { options["reasoning"] = ["effort": .string(effort)] }
 
     var body = options
+    if toolsDisabled { body["max_tool_calls"] = 0 }
     body[perplexityAgentPresetIDs.contains(modelID) ? "preset" : "model"] = .string(modelID)
     body["input"] = .array(preparedInput.input)
     if let maxOutputTokens = request.maxOutputTokens { body["max_output_tokens"] = .number(Double(maxOutputTokens)) }
     if let temperature = request.temperature { body["temperature"] = .number(temperature) }
     if let topP = request.topP { body["top_p"] = .number(topP) }
     if stream { body["stream"] = .bool(true) }
-    let tools = nativeTools + functionTools
+    let tools = toolsDisabled ? [] : nativeTools + functionTools
     if !tools.isEmpty { body["tools"] = .array(tools) }
     if let responseFormat = request.responseFormat {
         switch responseFormat {

@@ -1,5 +1,5 @@
 <!-- Generated distribution; edit the canonical repository. -->
-# swift-ai-perplexity 1.1.0
+# swift-ai-perplexity 1.1.1
 
 Independent Swift-native port of Vercel AI SDK. Source and upstream dispositions are in PROVENANCE.json and Porting/.
 
@@ -8,7 +8,7 @@ Independent Swift-native port of Vercel AI SDK. Source and upstream dispositions
 Add this package to your SwiftPM dependencies:
 
 ```swift
-.package(url: "https://github.com/SwiftAISDK/swift-ai-perplexity.git", from: "1.1.0")
+.package(url: "https://github.com/SwiftAISDK/swift-ai-perplexity.git", from: "1.1.1")
 ```
 
 Products: `SwiftAIPerplexity`.
@@ -26,3 +26,6 @@ Existing upstream baselines, capabilities and documented gaps remain unchanged.
 See `Porting/map.json` and the canonical provider guide.
 
 See [provider usage and capabilities](https://github.com/SwiftAISDK/SwiftAISDK/blob/main/docs-site/scripts/provider-guides/perplexity.md) for authentication, options and supported surfaces.
+## Behavior notes
+
+Agent requests with `toolChoice: "none"` omit native and function tool definitions and set `max_tool_calls` to zero, including presets. Conversation tool-call history is preserved.

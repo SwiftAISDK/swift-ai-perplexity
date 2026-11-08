@@ -3,20 +3,21 @@
   "packages": [
     {
       "name": "@ai-sdk/perplexity",
-      "reviewedVersion": "5.0.24",
+      "reviewedVersion": "5.0.28",
       "ledgerKind": "provider",
-      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/WeeklyUpstreamAudit20261101.json",
+      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/WeeklyUpstreamAudit20261101.json; 2026-11-08 delta: Docs/WeeklyUpstreamAudit20261108.json",
       "reviewStatus": "imported-reviewed-with-gaps",
-      "archiveIntegrity": "sha512-2Fy83iNRZqilpBEjE0mNTatKQgcEmcCcPkBELCWbL0cjVeMibhbzsh8lntKvzOBnfPbvKlHfeb/p8sAHgfysRg==",
-      "sourceRef": "npm:@ai-sdk/perplexity@5.0.24",
-      "testRef": "9b603d36186b75e58d5479445a96c76f6e2d2700",
+      "archiveIntegrity": "sha512-I/sJuOG1gYzOuHJWqXqNzYpboRwS4vMUqWuje+Jzg0HbdgZY2AeAcTlrQadetVnBSJoXKG4B0hDirexNVwjmrA==",
+      "sourceRef": "npm:@ai-sdk/perplexity@5.0.28",
+      "testRef": "0f3a85f92d1ce06ccde01d662407ef83e097a712",
       "testRefRelationship": "matching-release",
       "contractFamilies": [
+        "DecisionModelV4",
         "EmbeddingModelV4",
         "LanguageModelV4",
         "ProviderV4"
       ],
-      "contractReview": "2026-11-01: published declarations, source and exact matching-release changed tests reviewed; scoped dispositions and Swift translations are in Docs/WeeklyUpstreamAudit20261101.json. Existing broader product gaps remain; reviewed delta is not full-package parity."
+      "contractReview": "2026-11-08: published declarations/source and exact matching-release changed tests reviewed; native implementations, per-file dispositions and broader retained gaps are recorded in Docs/WeeklyUpstreamAudit20261108.json. Reviewed delta is not full-package or live-service parity."
     }
   ]
 }
