@@ -41,7 +41,7 @@ public final class PerplexityProvider: AIProvider, AIDecisionProvider, Sendable 
         var headers = normalizeHeaders(configuration.headers)
         if !headers.keys.contains(where: { $0.lowercased() == "x-pplx-integration" }) { headers["X-Pplx-Integration"] = "vercel-ai-sdk" }
         headers["authorization"] = headers["authorization"] ?? "Bearer \(key)"
-        headers = withUserAgentSuffix(headers, "ai-sdk-perplexity/5.0.28")
+        headers = withUserAgentSuffix(headers, "ai-sdk-perplexity/5.0.34")
         let baseURL = withoutTrailingSlash(configuration.baseURL ?? "https://api.perplexity.ai")
         let http = AIProviderHTTPClient(providerID: "perplexity", headers: headers, transport: configuration.transport,
             url: { _, path in try providerURL("\(baseURL)\(path)", queryParams: configuration.queryParams) })

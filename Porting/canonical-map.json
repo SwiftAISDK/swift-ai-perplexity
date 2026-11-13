@@ -35,6 +35,7 @@
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/Weekly20261101BehaviorTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/Weekly20261101CredentialsTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/Weekly20261108ToolChoiceTests.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/Weekly20261114GroundingTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/WeeklyPerplexity20261023Tests.swift"
     ],
     "resources": []
@@ -49,5 +50,5 @@
       "reason": "2026-11-01: integrity-verified @ai-sdk/perplexity 5.0.20 -> 5.0.24 source/declarations reviewed with exact matching-release tests 612be2311464804d1e4897afacbf8f3fc2f6d9e3 -> 9b603d36186b75e58d5479445a96c76f6e2d2700; focused Weekly20261101 assertions cover the published deltas and native credential settings. Existing coarse/imported mappings and earlier gaps remain unpromoted. Expose first-seen deduplicated searchQueries from generation search-result items and streaming reasoning/output/terminal-response items; no reported queries returns JSON null; fetch URLs remain distinct. Validate nullable search-results queries as string arrays, including malformed native response rejection. Portable none maps to minimal with compatibility warning; explicit native reasoning remains authoritative. Add lazy apiKeyProvider to Agent/Sonar/embedding/decision requests while retaining integration headers."
     }
   ],
-  "reviewNote": "2026-11-08: published @ai-sdk/perplexity 5.0.24..5.0.28 source, declarations and matching-release tests reviewed independently. Agent toolChoice none disables definitions and preset tool execution. Delta review is not a claim of whole-provider parity; existing documented gaps remain."
+  "reviewNote": "2026-11-08: published @ai-sdk/perplexity 5.0.24..5.0.28 source, declarations and matching-release tests reviewed independently. Agent toolChoice none disables definitions and preset tool execution. Delta review is not a claim of whole-provider parity; existing documented gaps remain. 2026-11-14: reviewed @ai-sdk/perplexity 5.0.28 -> 5.0.34 published archives/declarations and exact matching-release tests (0f3a85f92d1ce06ccde01d662407ef83e097a712 -> 8bc7652cdb13fc84722666eb93f45acd0d131eee). Package-specific changes, translated tests, known gaps and compatibility decisions are recorded in Docs/WeeklyUpstreamAudit20261114.json; package README describes consumer behavior. This delta review does not claim whole-package or live-service parity."
 }

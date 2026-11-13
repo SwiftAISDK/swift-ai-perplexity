@@ -47,10 +47,12 @@ public final class PerplexityDecisionModel: AIDecisionModelV4, @unchecked Sendab
             }
             questions[id] = .object(["type": .string(type), "instructions": question.instructions, "criteria": criteria])
         }
+        let providerOptions = try perplexityGroundingOptions(options.providerOptions["perplexity"])
         let state = try perplexityDecisionState(options.state)
         let result = try await config.sendJSONResponse(
             path: "/v1/decisions", modelID: modelID,
-            body: .object(["model": .string(modelID), "state": state, "questions": .object(questions)]),
+            body: .object(["model": .string(modelID), "state": state, "questions": .object(questions),
+                           "mode": providerOptions["mode"], "max_staleness": providerOptions["maxStaleness"]]),
             headers: options.headers, abortSignal: options.abortSignal
         )
         let raw = result.json
@@ -89,7 +91,7 @@ public final class PerplexityDecisionModel: AIDecisionModelV4, @unchecked Sendab
         var warnings: [AIWarning] = []
         if options.maxOutputTokens != nil { warnings.append(.init(type: "unsupported", feature: "maxOutputTokens")) }
         if options.reasoning != nil { warnings.append(.init(type: "unsupported", feature: "reasoning")) }
-        warnings += (options.providerOptions["perplexity"]?.objectValue ?? [:]).keys.sorted().map {
+        warnings += (options.providerOptions["perplexity"]?.objectValue ?? [:]).keys.filter { !["mode", "maxStaleness"].contains($0) }.sorted().map {
             AIWarning(type: "unsupported", feature: "providerOptions.perplexity.\($0)")
         }
         var usage: AIDecisionModelUsage?
@@ -103,9 +105,29 @@ public final class PerplexityDecisionModel: AIDecisionModelV4, @unchecked Sendab
             usage = try .init(inputTokens: tokens("input_tokens"), outputTokens: tokens("output_tokens"))
         }
         if let model = raw["model"], model != .null, model.stringValue == nil { throw invalid("Invalid response model.") }
+        var metadata: [String: JSONValue] = ["confidence": .object(confidence), "legend": .object(legend)]
+        for (wire, key) in [("search_results", "searchResults"), ("fetched_results", "fetchedResults")] {
+            if let value = raw[wire], value != .null {
+                guard let values = value.arrayValue else { throw invalid("Invalid grounding evidence.") }
+                for entry in values {
+                    guard entry["title"]?.stringValue != nil, entry["url"]?.stringValue != nil,
+                          entry["snippet"]?.stringValue != nil else { throw invalid("Invalid grounding evidence.") }
+                }
+                metadata[key] = value
+            }
+        }
+        if let details = raw["usage"]?["tool_calls_details"], details != .null {
+            guard let values = details.objectValue else { throw invalid("Invalid grounding tool counts.") }
+            metadata["toolCalls"] = .object(try values.mapValues { detail in
+                guard detail.objectValue != nil else { throw invalid("Invalid grounding tool count.") }
+                let count = detail["invocation"] ?? .null
+                guard count == .null || count.doubleValue != nil else { throw invalid("Invalid grounding tool count.") }
+                return .object(["invocation": count])
+            })
+        }
         return AIDecisionModelV4Result(
             answers: answers, usage: usage, warnings: warnings,
-            providerMetadata: ["perplexity": .object(["confidence": .object(confidence), "legend": .object(legend)])],
+            providerMetadata: ["perplexity": .object(metadata)],
             response: .init(id: result.response.headerValue("x-request-id"), modelID: raw["model"]?.stringValue ?? modelID,
                             headers: result.response.headers, body: raw)
         )
@@ -168,4 +190,29 @@ private func countPerplexityDecisionImages(_ value: JSONValue) throws -> Int {
         return try object.values.reduce(0) { try $0 + countPerplexityDecisionImages($1) }
     default: return 0
     }
+}
+
+/// Web-grounding controls for the native Decisions endpoint.
+public struct PerplexityDecisionModelOptions: Equatable, Sendable {
+    public enum Mode: String, Equatable, Sendable { case webGrounding = "web_grounding" }
+    public var mode: Mode?
+    public var maxStaleness: Int?
+    public init(mode: Mode? = nil, maxStaleness: Int? = nil) { self.mode = mode; self.maxStaleness = maxStaleness }
+    public var providerOptions: [String: JSONValue] {
+        ["perplexity": .object(["mode": mode.map { .string($0.rawValue) }, "maxStaleness": maxStaleness.map(JSONValue.init)])]
+    }
+}
+
+private func perplexityGroundingOptions(_ value: JSONValue?) throws -> [String: JSONValue] {
+    guard let value, value != .null else { return [:] }
+    guard let object = value.objectValue else {
+        throw AIError.invalidArgument(argument: "providerOptions.perplexity", message: "Decision options must be an object.")
+    }
+    if let mode = object["mode"], mode != "web_grounding" {
+        throw AIError.invalidArgument(argument: "providerOptions.perplexity.mode", message: "Only web_grounding is supported.")
+    }
+    if let value = object["maxStaleness"], value.doubleValue == nil || value.doubleValue?.rounded() != value.doubleValue || !(0...9_007_199_254_740_991).contains(value.doubleValue ?? -1) {
+        throw AIError.invalidArgument(argument: "providerOptions.perplexity.maxStaleness", message: "Maximum staleness must be a nonnegative integer.")
+    }
+    return object
 }
