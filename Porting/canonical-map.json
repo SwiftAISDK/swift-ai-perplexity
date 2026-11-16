@@ -28,6 +28,7 @@
     ],
     "tests": [
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/FixtureDownloadTransport.swift",
+      "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityAgentUpstreamTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityEmbeddingTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexitySonarTests.swift",
       "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityStreamingErrorTests.swift",

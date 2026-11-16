@@ -27,7 +27,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
         let raw = response.json
         try validatePerplexityAgentResponse(raw, providerID: providerID)
         if raw["status"]?.stringValue == "failed" || raw["error"] != nil && raw["error"] != .null {
-            throw AIError.apiCall(AIAPICallError(
+            var error = AIAPICallError(
                 provider: providerID,
                 url: response.response.url?.absoluteString,
                 requestBody: .object(body),
@@ -35,7 +35,9 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                 responseHeaders: response.response.headers,
                 responseBody: response.response.bodyText,
                 isRetryable: false
-            ))
+            )
+            error.message = raw["error"]?["message"]?.stringValue ?? "Perplexity response failed"
+            throw AIError.apiCall(error)
         }
 
         var content: [AIResultContentPart] = []
@@ -86,7 +88,7 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     )
                     let response = try await config.streamRequest(httpRequest)
                     guard (200..<300).contains(response.statusCode) else {
-                        throw apiCallError(provider: providerID, response: try await bufferedHTTPResponse(from: response, request: httpRequest))
+                        throw config.httpStatusError(try await bufferedHTTPResponse(from: response, request: httpRequest))
                     }
                     let responseHead = httpResponseHead(from: response, request: httpRequest)
                     continuation.yield(.streamStart(warnings: prepared.warnings))
@@ -98,9 +100,12 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     var hasResponseMetadata = false
                     var activeReasoningID: String?
                     var textByID: [String: String] = [:]
+                    var textIDs: [String] = []
                     var endedTextIDs: Set<String> = []
                     var emittedSourceURLs: Set<String> = []
                     var pendingSourcesByURL: [String: AISource] = [:]
+                    // Upstream flushes pending sources in insertion order (Map semantics).
+                    var pendingSourceURLs: [String] = []
                     var seenFunctionCalls: Set<String> = []
                     var hasFunctionCall = false
 
@@ -114,9 +119,10 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     }
 
                     func emitTextDelta(id: String, delta: String) {
-                        guard !endedTextIDs.contains(id), !delta.isEmpty else { return }
+                        guard !endedTextIDs.contains(id) else { return }
                         if textByID[id] == nil {
                             textByID[id] = ""
+                            textIDs.append(id)
                             continuation.yield(.textStart(id: id))
                         }
                         textByID[id, default: ""] += delta
@@ -137,11 +143,14 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                     func emitSource(_ source: AISource) {
                         guard let url = source.url, !emittedSourceURLs.contains(url) else { return }
                         if perplexityAgentSourceHasResultID(source) {
-                            pendingSourcesByURL.removeValue(forKey: url)
+                            if pendingSourcesByURL.removeValue(forKey: url) != nil {
+                                pendingSourceURLs.removeAll { $0 == url }
+                            }
                             emittedSourceURLs.insert(url)
                             continuation.yield(.source(source))
                         } else if pendingSourcesByURL[url] == nil {
                             pendingSourcesByURL[url] = source
+                            pendingSourceURLs.append(url)
                         }
                     }
 
@@ -202,6 +211,8 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                             continuation.yield(.error(message: String(describing: error)))
                             continue
                         }
+                        // Upstream emits raw chunks before schema validation.
+                        if request.includeRawChunks { continuation.yield(.raw(raw)) }
                         do {
                             try validatePerplexityAgentChunk(raw, providerID: providerID)
                         } catch {
@@ -209,7 +220,6 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                             continuation.yield(.error(message: String(describing: error), rawValue: raw))
                             continue
                         }
-                        if request.includeRawChunks { continuation.yield(.raw(raw)) }
                         switch raw["type"]?.stringValue {
                         case "response.created", "response.in_progress":
                             if !hasResponseMetadata, let responseValue = raw["response"], responseValue != .null {
@@ -281,9 +291,9 @@ public final class PerplexityLanguageModel: LanguageModel, @unchecked Sendable {
                             break
                         }
                     }
-                    for source in pendingSourcesByURL.values { continuation.yield(.source(source)) }
+                    for url in pendingSourceURLs { if let source = pendingSourcesByURL[url] { continuation.yield(.source(source)) } }
                     if let activeReasoningID { continuation.yield(.reasoningEnd(id: activeReasoningID)) }
-                    for id in textByID.keys where !endedTextIDs.contains(id) { continuation.yield(.textEnd(id: id)) }
+                    for id in textIDs where !endedTextIDs.contains(id) { continuation.yield(.textEnd(id: id)) }
                     continuation.yield(.finishMetadata(reason: finishReason, usage: usage, providerMetadata: perplexityAgentQueryMetadata(providerMetadata, queries: searchQueries)))
                     continuation.finish()
                 } catch {
@@ -344,7 +354,7 @@ public final class PerplexitySonarLanguageModel: LanguageModel, @unchecked Senda
                     let httpRequest = try config.request(path: "/chat/completions", modelID: modelID, body: body, headers: request.headers, abortSignal: request.abortSignal)
                     let response = try await config.streamRequest(httpRequest)
                     guard (200..<300).contains(response.statusCode) else {
-                        throw apiCallError(provider: providerID, response: try await bufferedHTTPResponse(from: response, request: httpRequest))
+                        throw config.httpStatusError(try await bufferedHTTPResponse(from: response, request: httpRequest))
                     }
                     let responseHead = httpResponseHead(from: response, request: httpRequest)
 
@@ -432,14 +442,13 @@ private func perplexityAgentPreparedCall(for request: LanguageModelRequest, mode
             warnings.append(AIWarning(type: "unsupported", feature: "provider-defined tool \(schema["name"]?.stringValue ?? name)"))
             continue
         }
-        var parameters = schema.objectValue
-        let description = parameters?.removeValue(forKey: "description")?.stringValue
-        let strict = parameters?.removeValue(forKey: "strict")?.boolValue
-        parameters?.removeValue(forKey: "providerOptions")
+        // Upstream `perplexity-prepare-tools` sends `tool.inputSchema` as `parameters`.
+        let description = aiFunctionToolDescription(schema)
+        let strict = aiFunctionToolStrict(schema)
         var tool: [String: JSONValue] = [
             "type": .string("function"),
             "name": .string(name),
-            "parameters": parameters.map(JSONValue.object) ?? schema
+            "parameters": aiFunctionToolInputSchema(schema)
         ]
         if let description { tool["description"] = .string(description) }
         if let strict { tool["strict"] = .bool(strict) }
@@ -1327,7 +1336,8 @@ private func perplexityAgentUsage(from value: JSONValue?) -> TokenUsage? {
 }
 
 private func perplexityAgentProviderMetadata(from usage: JSONValue?) -> [String: JSONValue] {
-    let details = usage?["tool_calls_details"]?.objectValue ?? [:]
+    let rawDetails = usage?["tool_calls_details"]?.objectValue
+    let details = rawDetails ?? [:]
     let searchCalls = details.reduce(0) { total, entry in
         entry.key.contains("search") ? total + (entry.value["invocation"]?.intValue ?? 0) : total
     }
@@ -1352,10 +1362,10 @@ private func perplexityAgentProviderMetadata(from usage: JSONValue?) -> [String:
         costMetadata = .null
     }
     let metadata: [String: JSONValue] = [
-        "usage": .object(["citationTokens": .null, "numSearchQueries": details.isEmpty ? .null : .number(Double(searchCalls))]),
+        "usage": .object(["citationTokens": .null, "numSearchQueries": rawDetails == nil ? .null : .number(Double(searchCalls))]),
         "images": .null,
         "cost": costMetadata,
-        "toolCalls": details.isEmpty ? .null : .object(toolCalls)
+        "toolCalls": rawDetails == nil ? .null : .object(toolCalls)
     ]
     return ["perplexity": .object(metadata)]
 }

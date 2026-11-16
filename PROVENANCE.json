@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
   "package": "swift-ai-perplexity",
-  "version": "1.2.1",
-  "releaseID": "weekly-upstream-20261115",
+  "version": "1.3.0",
+  "releaseID": "upstream-parity-20261116",
   "source": {
-    "commit": "1e543b35e0259a5bda888665dacf2d4a7f1bb0ed",
-    "baseCommit": "1e543b35e0259a5bda888665dacf2d4a7f1bb0ed",
+    "commit": "1c457dea36be42376a6853aecd5c48ffc4942178",
+    "baseCommit": "1c457dea36be42376a6853aecd5c48ffc4942178",
     "workingTree": false,
-    "inputsSHA256": "5508ffc6347bffaed13fb29409eb856df9a7796d3ebdcb6f623d1e8871b52999"
+    "inputsSHA256": "d7b8f52add7828d7e9ed20418fe072e7db03e75483a168bb7f5c34e9d2a04a13"
   },
   "dependencies": [
     {
       "package": "swift-ai-core",
-      "from": "1.2.0"
+      "from": "1.6.0"
     }
   ],
   "changes": [
     {
-      "id": "weekly-upstream-20261115",
-      "notes": "Align the versioned request identity with the reviewed published package while retaining native open String model IDs and existing request, response, option, error, stream and telemetry behavior. Derived TypeScript model-ID/catalog reorganizations preserve the existing native runtime policies. Reviewed npm delta: @ai-sdk/perplexity 5.0.34 to 5.0.35. Validation passed: node Scripts/test-packages.mjs (55 owning packages, 2451 owning tests and 1736 compatibility tests), generation checks, 27 tooling tests, isolation/version checks, deterministic exports and minimum-dependency consumers. Documentation check/build passed (104 pages). Publication is gated by exact-source Swift 6.3.3 CI; subsequent public refs and clients are recorded in Docs/ReleaseVerification20261115.json. Paid/live-service checks were not run; this delta does not claim full-package parity.",
-      "compatibility": "Compatible versioned request identity correction; existing public selectors and dependency minimums remain. npm baselines and Swift SemVer are independent."
+      "id": "upstream-parity-20261116",
+      "notes": "HTTP errors use upstream message extraction; sources and text ends flush in insertion order; function tools send only their input schema.",
+      "compatibility": "Source-compatible; changes are additive. Request bodies, results, warnings and errors change to match the reviewed upstream package."
     }
   ],
   "canonicalDirectory": "Packages/swift-ai-perplexity",
@@ -28,7 +28,7 @@
       "name": "@ai-sdk/perplexity",
       "reviewedVersion": "5.0.35",
       "ledgerKind": "provider",
-      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/WeeklyUpstreamAudit20261101.json; 2026-11-08 delta: Docs/WeeklyUpstreamAudit20261108.json; 2026-11-14 delta: Docs/WeeklyUpstreamAudit20261114.json; 2026-11-15 delta: Docs/WeeklyUpstreamAudit20261115.json",
+      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/Archive/WeeklyUpstreamAudit20261101.json; 2026-11-08 delta: Docs/Archive/WeeklyUpstreamAudit20261108.json; 2026-11-14 delta: Docs/Archive/WeeklyUpstreamAudit20261114.json; 2026-11-15 delta: Docs/Archive/WeeklyUpstreamAudit20261115.json",
       "reviewStatus": "imported-reviewed-with-gaps",
       "archiveIntegrity": "sha512-LGZlkTLUV891uqtpY+63Kz5EB2+O+rRtjGguBiacQbhMVTLM/Rx/bXhNEuIdsAbddLSdd5QkRbLkWXDW9MyegA==",
       "sourceRef": "npm:@ai-sdk/perplexity@5.0.35",
@@ -40,7 +40,7 @@
         "LanguageModelV4",
         "ProviderV4"
       ],
-      "contractReview": "2026-11-15: published source/declarations and exact matching-release tests reviewed separately. Native delta scenarios, per-file dispositions, unchanged-catalog evidence and explicit remaining gaps are recorded in Docs/WeeklyUpstreamAudit20261115.json. Required checks remain a separate gate; no full-package/live-service parity claim."
+      "contractReview": "2026-11-15: published source/declarations and exact matching-release tests reviewed separately. Native delta scenarios, per-file dispositions, unchanged-catalog evidence and explicit remaining gaps are recorded in Docs/Archive/WeeklyUpstreamAudit20261115.json. Required checks remain a separate gate; no full-package/live-service parity claim."
     }
   ],
   "note": "Independent port. Imported test refs and contract review gaps retain their original status; export is not new upstream parity proof.",
@@ -59,11 +59,11 @@
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Porting/map.json",
-      "sha256": "d23133ae91eff11e8cfb0f730fde697efdd6c86e38b79b59e0d62d8da784200c"
+      "sha256": "85b26b2821a717b8247087c2cb22582f6697f9082a2b57aaff46e1ee4df85e2d"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/README.md",
-      "sha256": "c180ab368a6731e61060c7655bae82bc8f55a3618fb5d8a8b6647c15613f7b00"
+      "sha256": "32c126a29dafdcaa697ba9e2fca98a01ede13aa108d5f70ced45713ef7afbad4"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityDecisionModel.swift",
@@ -75,15 +75,19 @@
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityModels.swift",
-      "sha256": "fc1910d4e3740619fa53312fe8850a9e0bc971787bb464fd61996c9a78f199a9"
+      "sha256": "de7182b57c512b4293b48aa87aff16a8e1ff90a55e3513208d524ab894a72521"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityProvider.swift",
-      "sha256": "8f00e8532b498badc158f99b03f19f7a4500710846b63736a1b070f2f9166aaf"
+      "sha256": "4002074043ff7bdc48050a8b011fb4375bf5e54a48bafe64f49f99bf49bb08c0"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/FixtureDownloadTransport.swift",
       "sha256": "9ff9d3c55972f7627ee3eb6345586a4b50908f0d6730448314932845bd4d3692"
+    },
+    {
+      "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityAgentUpstreamTests.swift",
+      "sha256": "d00536232a4205f7e3c1e9918f19bb97a548501bc80aa385a12b9036e9ea5959"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityEmbeddingTests.swift",

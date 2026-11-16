@@ -99,4 +99,36 @@ public struct PerplexityModelConfiguration: AIProviderHTTPConfiguration {
                 transformRequestBody: (@Sendable ([String: JSONValue]) -> [String: JSONValue])? = nil) {
         self.http = http; self.transformRequestBody = transformRequestBody
     }
+
+    /// Maps HTTP failures with Perplexity's error envelope (upstream `perplexityErrorToMessage`).
+    public func httpStatusError(_ response: AIHTTPResponse) -> AIError {
+        perplexityAPICallError(provider: providerID, response: response)
+    }
+}
+
+func perplexityAPICallError(provider: String, response: AIHTTPResponse) -> AIError {
+    var error = AIAPICallError(
+        provider: provider,
+        url: response.url?.absoluteString,
+        statusCode: response.statusCode,
+        responseHeaders: response.headers,
+        responseBody: response.bodyText
+    )
+    error.message = (try? decodeJSONBody(response.body)).flatMap(perplexityErrorToMessage)
+    return .apiCall(error)
+}
+
+/// Upstream `perplexityErrorToMessage`; `nil` when the body is not a Perplexity error envelope.
+func perplexityErrorToMessage(_ data: JSONValue) -> String? {
+    guard data.objectValue != nil else { return nil }
+    if let error = data["error"], error != .null {
+        if let message = error.stringValue { return message }
+        guard error.objectValue != nil else { return nil }
+        return error["message"]?.stringValue ?? error["type"]?.stringValue ?? "unknown error"
+    }
+    if let detail = data["detail"]?.stringValue { return detail }
+    if let details = data["detail"]?.arrayValue {
+        return details.map { $0["msg"]?.stringValue ?? "" }.joined(separator: ", ")
+    }
+    return data["message"]?.stringValue ?? "unknown error"
 }
