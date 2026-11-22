@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "package": "swift-ai-perplexity",
-  "version": "1.3.0",
-  "releaseID": "upstream-parity-20261116",
+  "version": "1.3.1",
+  "releaseID": "weekly-upstream-20261122",
   "source": {
-    "commit": "1c457dea36be42376a6853aecd5c48ffc4942178",
-    "baseCommit": "1c457dea36be42376a6853aecd5c48ffc4942178",
+    "commit": "73e28c7d4106338c3030bc36700c5922aeb2ebd9",
+    "baseCommit": "73e28c7d4106338c3030bc36700c5922aeb2ebd9",
     "workingTree": false,
-    "inputsSHA256": "d7b8f52add7828d7e9ed20418fe072e7db03e75483a168bb7f5c34e9d2a04a13"
+    "inputsSHA256": "5b64cfae284ecf9a081f1c08d5b5dff83915b3c57b62669a3408e51a52961cb5"
   },
   "dependencies": [
     {
@@ -17,22 +17,22 @@
   ],
   "changes": [
     {
-      "id": "upstream-parity-20261116",
-      "notes": "HTTP errors use upstream message extraction; sources and text ends flush in insertion order; function tools send only their input schema.",
-      "compatibility": "Source-compatible; changes are additive. Request bodies, results, warnings and errors change to match the reviewed upstream package."
+      "id": "weekly-upstream-20261122",
+      "notes": "Align the provider request identity with @ai-sdk/perplexity 5.0.37 after comparing source, declarations and matching-release tests against 5.0.35. Offline validation passed: node Scripts/test-packages.mjs (56 packages, 3672 owning tests and 1760 compatibility tests), generation, tooling, isolation, and version selection. See Docs/Archive/WeeklyUpstreamAudit20261122.md for retained gaps. Paid provider calls were skipped.",
+      "compatibility": "Source-compatible request-header update."
     }
   ],
   "canonicalDirectory": "Packages/swift-ai-perplexity",
   "upstream": [
     {
       "name": "@ai-sdk/perplexity",
-      "reviewedVersion": "5.0.35",
+      "reviewedVersion": "5.0.37",
       "ledgerKind": "provider",
-      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/Archive/WeeklyUpstreamAudit20261101.json; 2026-11-08 delta: Docs/Archive/WeeklyUpstreamAudit20261108.json; 2026-11-14 delta: Docs/Archive/WeeklyUpstreamAudit20261114.json; 2026-11-15 delta: Docs/Archive/WeeklyUpstreamAudit20261115.json",
+      "evidence": "`AIProviders.perplexity`, `PerplexityLanguageModel`, `PerplexitySonarLanguageModel`, `PerplexityEmbeddingModel`, `PerplexityDecisionModel`, `WeeklyPerplexity20261023Tests.swift`, `PerplexityMistralUpstreamTests.swift`; 2026-11-01 delta: Docs/Archive/WeeklyUpstreamAudit20261101.json; 2026-11-08 delta: Docs/Archive/WeeklyUpstreamAudit20261108.json; 2026-11-14 delta: Docs/Archive/WeeklyUpstreamAudit20261114.json; 2026-11-15 delta: Docs/Archive/WeeklyUpstreamAudit20261115.json; 2026-11-22 delta: Docs/Archive/WeeklyUpstreamAudit20261122.json",
       "reviewStatus": "imported-reviewed-with-gaps",
-      "archiveIntegrity": "sha512-LGZlkTLUV891uqtpY+63Kz5EB2+O+rRtjGguBiacQbhMVTLM/Rx/bXhNEuIdsAbddLSdd5QkRbLkWXDW9MyegA==",
-      "sourceRef": "npm:@ai-sdk/perplexity@5.0.35",
-      "testRef": "0e8e0543aeda7d4dd4ce6eade0d5b7d5a43644c1",
+      "archiveIntegrity": "sha512-RnaMfC/dB0P1WGr5qrFDkH1m2IaopkMpybTIsWAULt4Axb8zS8RAz70WilutmahqpvmDOv0kknwK9AO6aFqczA==",
+      "sourceRef": "npm:@ai-sdk/perplexity@5.0.37",
+      "testRef": "3dad57f204c7332178d28c3467c7311875b66a3e",
       "testRefRelationship": "matching-release",
       "contractFamilies": [
         "DecisionModelV4",
@@ -40,7 +40,7 @@
         "LanguageModelV4",
         "ProviderV4"
       ],
-      "contractReview": "2026-11-15: published source/declarations and exact matching-release tests reviewed separately. Native delta scenarios, per-file dispositions, unchanged-catalog evidence and explicit remaining gaps are recorded in Docs/Archive/WeeklyUpstreamAudit20261115.json. Required checks remain a separate gate; no full-package/live-service parity claim."
+      "contractReview": "2026-11-22: reviewed the published source and declarations and the matching-release test diffs. Native evidence and explicitly retained coverage gaps are in Docs/Archive/WeeklyUpstreamAudit20261122.json."
     }
   ],
   "note": "Independent port. Imported test refs and contract review gaps retain their original status; export is not new upstream parity proof.",
@@ -79,7 +79,7 @@
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Sources/SwiftAIPerplexity/PerplexityProvider.swift",
-      "sha256": "4002074043ff7bdc48050a8b011fb4375bf5e54a48bafe64f49f99bf49bb08c0"
+      "sha256": "b847db142d865ba8d007710b97d942185f2a8f44dadbb907d56eeeeb87e6214e"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/FixtureDownloadTransport.swift",
@@ -95,7 +95,7 @@
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexitySonarTests.swift",
-      "sha256": "275293cf25c748dc8c432872cb7e963a0826f020ea4e0199c73a661e7e8eb40c"
+      "sha256": "c5d90c2c452bba78cdcc2502173239caade8837801bb97a37aa721c9923ab77b"
     },
     {
       "canonicalPath": "Packages/swift-ai-perplexity/Tests/SwiftAIPerplexityTests/PerplexityStreamingErrorTests.swift",
